@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PreçoPulse</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --linear: linear-gradient(135deg, #7a7f8e 0%, #9fa3aa 25%, #7a7f8e, #9fa3aa 75%, #7a7f8e 100%);
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2128;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e9ec;
+    --muted: #7a7f8e;
+    --accent: #c8f135;
+    --accent-dim: rgba(200,241,53,0.12);
+    --red: #c91212;
+    --red-dim: rgba(255,87,87,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --green: #4cdb8c;
+    --green-dim: rgba(76,219,140,0.12);
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--linear);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    padding: 0 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+
+  .main { flex: 1; padding: 2rem; overflow-y: auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .page-header h1 { font-size: 18px; font-weight: 600; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .metric-value { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+
+  .product-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .product-item:last-child { margin-bottom: 0; }
+  .product-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .product-info { flex: 1; min-width: 0; }
+  .product-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .product-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .product-price { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; flex-shrink: 0; }
+  .product-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-family: 'DM Mono', monospace;
+    padding: 3px 8px; border-radius: 20px; font-weight: 500;
+  }
+  .badge-green { background: var(--green-dim); color: var(--green); }
+  .badge-red { background: var(--red-dim); color: var(--red); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); }
+
+  .btn {
+    padding: 7px 14px; border-radius: var(--radius);
+    font-size: 12px; font-family: 'Sora', sans-serif;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text); cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.97); }
+  .btn-accent { background: var(--accent); color: #0e0f11; border-color: transparent; font-weight: 600; }
+  .btn-accent:hover { opacity: 0.88; background: var(--accent); }
+  .btn-danger { border-color: var(--red-dim); color: var(--red); }
+  .btn-danger:hover { background: var(--red-dim); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .btn-icon { padding: 5px 8px; font-size: 13px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; height: 36px; padding: 0 10px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 13px; font-family: 'Sora', sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input[type="password"] { letter-spacing: 0.1em; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 1.5rem;
+    width: 440px; max-width: 95vw;
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .modal-header h2 { font-size: 15px; font-weight: 600; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { font-family: 'DM Mono', monospace; color: var(--muted); flex-shrink: 0; width: 130px; }
+  .log-product { color: var(--muted); flex-shrink: 0; }
+
+  .toggle { position: relative; width: 36px; height: 20px; display: inline-block; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--border2); border-radius: 20px; cursor: pointer; transition: 0.2s; }
+  .slider::before { content: ''; position: absolute; height: 14px; width: 14px; left: 3px; top: 3px; background: var(--muted); border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider { background: var(--accent-dim); }
+  input:checked + .slider::before { transform: translateX(16px); background: var(--accent); }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 0.75rem; }
+  .empty p { font-size: 13px; line-height: 1.6; }
+
+  .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: var(--surface2); border: 1px solid var(--border2);
+    color: var(--text); padding: 10px 16px; border-radius: var(--radius);
+    font-size: 13px; z-index: 200;
+    transform: translateY(10px); opacity: 0;
+    transition: all 0.25s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-logo">♨︎ PreçoPulse</div>
+    <button class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">◈</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="navigate('products')">
+      <span class="nav-icon">◇</span> Produtos
+    </button>
+    <button class="nav-item" onclick="navigate('logs')">
+      <span class="nav-icon">≡</span> Logs
+    </button>
+    <button class="nav-item" onclick="navigate('settings')">
+      <span class="nav-icon">⚙</span> Configurações
+    </button>
+  </nav>
+
+  <main class="main">
+
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <span id="dash-time" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;"></span>
+      </div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Produtos monitorados</div>
+          <div class="metric-value" id="m-total">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Alertas ativos</div>
+          <div class="metric-value" style="color:var(--green)" id="m-alerts">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Acima do limite</div>
+          <div class="metric-value" style="color:var(--muted)" id="m-above">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.06em;">Todos os produtos</div>
+        <div id="dash-products-list"></div>
+      </div>
+    </div>
+
+    <div id="page-products" class="page">
+      <div class="page-header">
+        <h1>Produtos</h1>
+        <button class="btn btn-accent" onclick="openAddModal()">+ Adicionar produto</button>
+      </div>
+      <div class="card">
+        <div id="products-list"></div>
+      </div>
+    </div>
+
+    <div id="page-logs" class="page">
+      <div class="page-header">
+        <h1>Logs de verificação</h1>
+        <button class="btn btn-sm" onclick="loadLogs()">↻ Atualizar</button>
+      </div>
+      <div class="card">
+        <div id="logs-list"></div>
+      </div>
+    </div>
+
+    <div id="page-settings" class="page">
+      <div class="page-header"><h1>Configurações</h1></div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.06em;">E-mail (Gmail)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">E-mail de envio</label>
+            <input class="form-input" id="s-from" type="email" placeholder="seu@gmail.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-mail de destino</label>
+            <input class="form-input" id="s-to" type="email" placeholder="destino@gmail.com" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Senha de app Gmail (App Password)</label>
+          <input class="form-input" id="s-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+        </div>
+        <div class="divider"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.06em;">Verificação automática</div>
+        <div class="form-group">
+          <label class="form-label">Intervalo (horas): <strong id="s-interval-label">6h</strong></label>
+          <input type="range" min="1" max="24" value="6" id="s-interval"
+            style="width:100%;accent-color:var(--accent);"
+            oninput="document.getElementById('s-interval-label').textContent=this.value+'h'" />
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-accent" onclick="saveSettings()">Salvar configurações</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Adicionar produto</h2>
+      <button class="btn btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nome do produto (opcional)</label>
+      <input class="form-input" id="p-name" placeholder="Será preenchido automaticamente" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">URL do produto *</label>
+      <input class="form-input" id="p-url" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Preço máximo para alerta (R$) *</label>
+      <input class="form-input" id="p-limit" type="number" placeholder="5000" min="0" step="100" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveProduct()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let editingId = null;
+let products = [];
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item')[['dashboard','products','logs','settings'].indexOf(page)].classList.add('active');
+  if (page === 'logs') loadLogs();
+  if (page === 'settings') loadSettings();
+}
+
+function toast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ---- helpers ----
+function fmt(v) {
+  if (v == null) return '—';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function statusBadge(p) {
+  if (p.last_price == null) return '<span class="badge badge-amber">Não verificado</span>';
+  if (p.last_price < p.limit) return '<span class="badge badge-green">Abaixo do limite</span>';
+  return '<span class="badge badge-red">Acima do limite</span>';
+}
+
+function priceColor(p) {
+  if (p.last_price == null) return 'var(--muted)';
+  return p.last_price < p.limit ? 'var(--green)' : 'var(--red)';
+}
+
+function dotColor(p) {
+  if (p.last_price == null) return 'var(--amber)';
+  return p.last_price < p.limit ? 'var(--green)' : 'var(--red)';
+}
+
+// ---- load products ----
+async function loadProducts() {
+  const r = await fetch('/api/products');
+  products = await r.json();
+  renderDashboard();
+  renderProductList();
+}
+
+function renderDashboard() {
+  const total = products.length;
+  const alerts = products.filter(p => p.last_price != null && p.last_price < p.limit).length;
+  const above = products.filter(p => p.last_price != null && p.last_price >= p.limit).length;
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-alerts').textContent = alerts;
+  document.getElementById('m-above').textContent = above;
+
+  const list = document.getElementById('dash-products-list');
+  if (!products.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">◇</div><p>Nenhum produto ainda.<br>Vá em Produtos e adicione o primeiro.</p></div>';
+    return;
+  }
+  list.innerHTML = products.map(p => `
+    <div class="product-item">
+      <div class="product-dot" style="background:${dotColor(p)}"></div>
+      <div class="product-info">
+        <div class="product-name">${p.name || p.url}</div>
+        <div class="product-meta">Limite: ${fmt(p.limit)} · ${p.last_check ? 'Verificado: '+p.last_check : 'Nunca verificado'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="product-price" style="color:${priceColor(p)}">${fmt(p.last_price)}</div>
+        ${statusBadge(p)}
+        <button class="btn btn-sm" onclick="checkNow(${p.id})" title="Verificar agora">↻</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderProductList() {
+  const list = document.getElementById('products-list');
+  if (!products.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">◇</div><p>Nenhum produto cadastrado ainda.</p></div>';
+    return;
+  }
+  list.innerHTML = products.map(p => `
+    <div class="product-item">
+      <div class="product-dot" style="background:${dotColor(p)}"></div>
+      <div class="product-info">
+        <div class="product-name">${p.name || 'Sem nome'}</div>
+        <div class="product-meta" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.url}</div>
+        <div class="product-meta">Limite: ${fmt(p.limit)} · Último preço: ${fmt(p.last_price)}</div>
+      </div>
+      <div class="product-actions">
+        ${statusBadge(p)}
+        <button class="btn btn-sm btn-icon" onclick="checkNow(${p.id})" title="Verificar agora">↻</button>
+        <button class="btn btn-sm" onclick="openEditModal(${p.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${p.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ---- modal ----
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Adicionar produto';
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-url').value = '';
+  document.getElementById('p-limit').value = '';
+  document.getElementById('product-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Editar produto';
+  document.getElementById('p-name').value = p.name || '';
+  document.getElementById('p-url').value = p.url;
+  document.getElementById('p-limit').value = p.limit;
+  document.getElementById('product-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('product-modal').classList.remove('open');
+}
+
+async function saveProduct() {
+  const url = document.getElementById('p-url').value.trim();
+  const limit = document.getElementById('p-limit').value;
+  if (!url || !limit) { toast('Preencha URL e limite de preço'); return; }
+  const body = { name: document.getElementById('p-name').value.trim(), url, limit: parseFloat(limit) };
+
+  if (editingId) {
+    await fetch('/api/products/' + editingId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    toast('Produto atualizado!');
+  } else {
+    await fetch('/api/products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    toast('Produto adicionado!');
+  }
+  closeModal();
+  loadProducts();
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Remover este produto?')) return;
+  await fetch('/api/products/' + id, { method: 'DELETE' });
+  toast('Produto removido');
+  loadProducts();
+}
+
+async function checkNow(id) {
+  toast('Verificando...');
+  const r = await fetch('/api/products/' + id + '/check', { method: 'POST' });
+  if (r.ok) { toast('Verificação concluída!'); loadProducts(); }
+  else { const e = await r.json(); toast('Erro: ' + (e.error || 'desconhecido')); }
+}
+
+// ---- logs ----
+async function loadLogs() {
+  const r = await fetch('/api/logs');
+  const logs = await r.json();
+  const list = document.getElementById('logs-list');
+  if (!logs.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">≡</div><p>Nenhum log ainda.</p></div>';
+    return;
+  }
+  list.innerHTML = logs.map(l => {
+    let cls = 'var(--muted)', status = '—';
+    if (l.error) { cls = 'var(--red)'; status = 'Erro: ' + l.error; }
+    else if (l.alert_sent) { cls = 'var(--green)'; status = 'Alerta enviado · ' + fmt(l.price); }
+    else if (l.price != null) { cls = 'var(--muted)'; status = fmt(l.price) + ' (acima do limite)'; }
+    return `<div class="log-entry">
+      <span class="log-time">${l.timestamp}</span>
+      <span class="log-product" style="min-width:140px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.product}</span>
+      <span style="color:${cls};font-size:12px;">${status}</span>
+    </div>`;
+  }).join('');
+}
+
+// ---- settings ----
+async function loadSettings() {
+  const r = await fetch('/api/settings');
+  const s = await r.json();
+  document.getElementById('s-from').value = s.email_from || '';
+  document.getElementById('s-to').value = s.email_to || '';
+  document.getElementById('s-interval').value = s.interval_hours || 6;
+  document.getElementById('s-interval-label').textContent = (s.interval_hours || 6) + 'h';
+}
+
+async function saveSettings() {
+  const body = {
+    email_from: document.getElementById('s-from').value.trim(),
+    email_to: document.getElementById('s-to').value.trim(),
+    password: document.getElementById('s-pass').value,
+    interval_hours: parseInt(document.getElementById('s-interval').value)
+  };
+  await fetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  toast('Configurações salvas!');
+}
+
+// ---- clock ----
+function updateClock() {
+  const now = new Date();
+  document.getElementById('dash-time').textContent = now.toLocaleString('pt-BR');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ---- init ----
+loadProducts();
+</script>
+</body>
+</html>
